@@ -318,7 +318,7 @@ All paths are prefixed with `/api/v1/` unless otherwise noted.
 | POST | `/api/v1/order/cancel_order` | Yes | Cancel an order by trade ID |
 | POST | `/api/v1/order/update_price` | Yes | Update an order's price |
 | POST | `/api/v1/order/update_qty` | Yes | Update an order's quantity |
-| POST | `/api/v1/order/trades` | Yes | Get all trades (update status + list) |
+| POST | `/api/v1/order/trades` | Yes | Get trades; `refresh` defaults to `true`, `false` reads process-local cache only |
 | POST | `/api/v1/order/place_comboorder` | Yes | Place a combo (spread) order |
 | POST | `/api/v1/order/cancel_comboorder` | Yes | Cancel a combo order |
 | POST | `/api/v1/order/combotrades` | Yes | Get all combo trades |
@@ -500,7 +500,7 @@ For CA/order-readiness decisions, see [PREPARE.md](PREPARE.md) and [ORDERS.md](O
 
 #### POST `/api/v1/auth/subscribe_trade`
 
-Subscribe to per-account trade/deal events on the Solace relay's P2P topic. **Required** before consuming `/api/v1/stream/data/order_event` in production — without it the SSE stream only emits heartbeats. Mirrors `POST /api/v1/stream/subscribe` for market data: explicit per-resource opt-in.
+Subscribe to per-account order/deal events. Production and simulation both support this route. A successful response starts active reports for that account; without a successful subscription, the SSE stream only emits heartbeats. Mirrors `POST /api/v1/stream/subscribe` for market data: explicit per-resource opt-in.
 
 Request:
 
@@ -525,9 +525,7 @@ Response (200):
 }
 ```
 
-The server keeps the subscription active across its daily client refresh, so callers only need to subscribe once per server boot per account.
-
-**Simulation:** paper order events are delivered through a separate path. The server returns a no-op success (`200`) for `subscribe_trade`. Calling it is harmless but never required in simulation.
+Call this route after login for each account before consuming `order_event`. This contract is the same in production and simulation.
 
 For trade-event subscription decisions, see [PREPARE.md](PREPARE.md), [ORDERS.md](ORDERS.md), and [STREAMING.md](STREAMING.md).
 
@@ -535,7 +533,7 @@ For trade-event subscription decisions, see [PREPARE.md](PREPARE.md), [ORDERS.md
 
 Inverse of `subscribe_trade`. Stops order/deal events for the account when unsubscribe succeeds. Same request shape; response has `"subscribe_trade": false`.
 
-**Simulation:** can return `400 Bad Request` because there is no production trade-event subscription to cancel. Don't call this in simulation.
+Production and simulation both support this route. A successful unsubscribe returns `"subscribe_trade": false` and stops active reports for that account.
 
 ### Data Endpoints
 
@@ -844,7 +842,7 @@ login session. Available since 1.5.12 (#234).
 { "trade_id": "abc123" }
 ```
 
-`trade_id` is `Trade.order.id` from a `Trade` returned by the same server process. Internally the server looks up that id in its trade cache to recover the original contract, order, account, and CA before sending cancel/update upstream. If the caller only knows `ordno`/`seqno`, or the order was not placed through this server process, call `POST /api/v1/order/trades` first; it runs `update_status(account)`, refreshes the cache, and returns `Vec<Trade>`. Select the intended trade, then send `trade.order.id`.
+`trade_id` is `Trade.order.id` from a `Trade` returned by the same server process. Internally the server looks up that id in its trade cache to recover the original contract, order, account, and CA before sending cancel/update upstream. If the caller only knows `ordno`/`seqno`, or the order was not placed through this server process, call `POST /api/v1/order/trades` with `refresh` omitted or `true`; it runs `update_status(account)`, refreshes the cache, and returns `Vec<Trade>`. Select the intended trade, then send `trade.order.id`.
 
 The returned `Trade` is not always the final cancelled state. Watch official `order_deal_event` via `/api/v1/stream/data/order_event`, or call `/api/v1/order/trades` again for reconciliation.
 
@@ -866,11 +864,20 @@ Uses the same cache-backed `trade_id = Trade.order.id` rule as `cancel_order`: u
 
 #### POST `/api/v1/order/trades`
 
-List all trades (triggers status update before listing). Requires `AccountRequest`:
+Get trades for the resolved account. `refresh` is optional and defaults to
+`true`, preserving the historical behavior that calls `update_status()` before
+returning. Set it to `false` to read only this server process's in-memory cache
+without an upstream request:
 
 ```json
-{ "account_type": "S" }
+{ "account_type": "S", "refresh": false }
 ```
+
+Cache-only results contain only trades already observed or refreshed by this
+running server and are filtered to the resolved `broker_id` and `account_id`.
+They are a local snapshot, not an authoritative reconciliation: use
+`refresh: true` when active reports may have been missed or final status must be
+confirmed.
 
 #### POST `/api/v1/order/place_comboorder`
 

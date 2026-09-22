@@ -666,8 +666,8 @@ curl -X POST http://localhost:8080/api/v1/stream/subscribe \
 curl -N http://localhost:8080/api/v1/stream/data/tick_stk
 ```
 
-For futures continuous-month aliases such as `TXFR1` / `TXFR2`, resolve the contract first and include the returned `target_code` in the subscribe body. Regular futures codes do not need this. For order events in production, call `POST /api/v1/auth/subscribe_trade` once per account before opening `/api/v1/stream/data/order_event`; simulation does not require it.
-期貨連續月 alias（如 `TXFR1` / `TXFR2`）要先查合約並在訂閱 body 放入回傳的 `target_code`；一般期貨代碼不需要。正式環境的委託回報要先對每個帳戶呼叫一次 `POST /api/v1/auth/subscribe_trade`，再打開 `/api/v1/stream/data/order_event`；simulation 不需要。
+For futures continuous-month aliases such as `TXFR1` / `TXFR2`, resolve the contract first and include the returned `target_code` in the subscribe body. Regular futures codes do not need this. For order events in production or simulation, call `POST /api/v1/auth/subscribe_trade` for each account before opening `/api/v1/stream/data/order_event`; success starts active reports for that account.
+期貨連續月 alias（如 `TXFR1` / `TXFR2`）要先查合約並在訂閱 body 放入回傳的 `target_code`；一般期貨代碼不需要。正式環境與測試環境的委託回報都要先對每個帳戶呼叫 `POST /api/v1/auth/subscribe_trade`，成功後開始接收該帳戶的主動回報，再打開 `/api/v1/stream/data/order_event`。
 
 ### HTTP API Instead of Non-blocking Mode 以 HTTP API 取代非阻塞模式
 

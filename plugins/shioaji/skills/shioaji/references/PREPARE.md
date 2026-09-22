@@ -604,8 +604,8 @@ Use this section before deciding whether the server is ready, whether login/acco
 
 | Check | Response shape | Agent decision |
 |---|---|---|
-| Python `api.subscribe_trade(account)` / `POST /api/v1/auth/subscribe_trade` | `SubscribeTradeOut { account, subscribe_trade, ts }` | Required before consuming HTTP `/api/v1/stream/data/order_event` in production. If `subscribe_trade=false` or the call errors, do not assume order/deal events are active. In simulation, HTTP subscribe is a no-op success and is not required. |
-| Python `api.unsubscribe_trade(account)` / `POST /api/v1/auth/unsubscribe_trade` | `SubscribeTradeOut { account, subscribe_trade, ts }` | Treat `subscribe_trade=false` as unsubscribed. In simulation, HTTP unsubscribe can return validation error because there is no production trade-event subscription to cancel. |
+| Python `api.subscribe_trade(account)` / `POST /api/v1/auth/subscribe_trade` | `SubscribeTradeOut { account, subscribe_trade, ts }` | Production and simulation both support this operation. It is required before consuming HTTP `/api/v1/stream/data/order_event`; success starts active reports for that account. If `subscribe_trade=false` or the call errors, do not assume order/deal events are active. |
+| Python `api.unsubscribe_trade(account)` / `POST /api/v1/auth/unsubscribe_trade` | `SubscribeTradeOut { account, subscribe_trade, ts }` | Production and simulation both support this operation. Treat `subscribe_trade=false` as successfully unsubscribed; active reports for that account stop. |
 
 ---
 

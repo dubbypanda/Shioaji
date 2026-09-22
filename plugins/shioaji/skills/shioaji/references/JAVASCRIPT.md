@@ -186,6 +186,9 @@ export interface Account {
   username?: string;
 }
 
+/** 委託查詢；refresh 預設為 true 以維持既有行為。 */
+export type TradesRequest = Partial<Account> & { refresh?: boolean };
+
 /** 快照 | Snapshot */
 export interface Snapshot {
   datetime: string;
@@ -428,9 +431,9 @@ export class ShioajiClient {
     });
   }
 
-  /** 更新並查詢委託狀態 | Update and list trades */
-  async trades(account: Partial<Account> = {}): Promise<Trade[]> {
-    return this.request<Trade[]>("POST", "/order/trades", account);
+  /** 查詢委託；refresh=false 僅讀 server process cache。 */
+  async trades(req: TradesRequest = {}): Promise<Trade[]> {
+    return this.request<Trade[]>("POST", "/order/trades", req);
   }
 
   /** 查詢歷史委託/成交事件 | Historical order/deal records */
@@ -563,7 +566,7 @@ await client.subscribe({
 
 For futures continuous-month aliases such as `TXFR1` / `TXFR2`, first call `GET /api/v1/data/contracts/TXFR1?security_type=FUT` and copy the returned `target_code` into the subscribe request. Regular futures codes do not need `target_code`.
 
-Order events use a separate account subscription in production. Before opening `/api/v1/stream/data/order_event`, call `POST /api/v1/auth/subscribe_trade` once per account; simulation does not require it.
+Order events use a separate per-account subscription in production and simulation. Before opening `/api/v1/stream/data/order_event`, call `POST /api/v1/auth/subscribe_trade` for each account; success starts active reports for that account.
 
 ### 6.2 接收資料 | Receive Data
 

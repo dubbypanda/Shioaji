@@ -86,7 +86,7 @@ Routing rule: choose the functional reference first, then add the access-method 
 | Install this Shioaji plugin/skill into Claude, Codex, Cursor, or another agent environment | [AGENTS.md](references/AGENTS.md) |
 | Use or troubleshoot `agent_harness`, approval capabilities, protected HTTP mutations, `X-Shioaji-Agent-Capability`, or mutation `403` responses | [AGENT_HARNESS.md](references/AGENT_HARNESS.md) + the matching order/reserve reference |
 | Contract V2 lookup, typed info, lazy cache behavior, update events, or 1.5 `api.Contracts` compatibility | [CONTRACTS.md](references/CONTRACTS.md) (+ [CONTRACT_FIELDS.md](references/CONTRACT_FIELDS.md) for full Info field lists) |
-| Place, modify, cancel regular stock/futures/options orders; `order_deal_event` active order/deal reports (Python callbacks, HTTP order-event SSE) | [ORDERS.md](references/ORDERS.md) |
+| Orders, callbacks/HTTP SSE, event IDs, historical empty IDs, deduplication and sequence gaps / 股票／期貨／選擇權下單、改單、刪單；主動回報、事件 ID、歷史空 ID、去重與跳號 | [ORDERS.md](references/ORDERS.md) |
 | Build or enumerate combo contracts with `api.contracts.combo_futures`; validate managed `BaseContract` vs legacy directed `ComboBase` legs; subscribe/query futures combo market data; place, price, cancel, or troubleshoot combo orders; derive canonical leg order/actions and `combo_type`; use `update_combostatus` / `list_combotrades` | [COMBO_ORDERS.md](references/COMBO_ORDERS.md) |
 | Reserve shares for disposition/attention stocks | [RESERVE.md](references/RESERVE.md) |
 | Subscribe real-time quotes, tick/bidask/quote/index callbacks, realtime KBar 即時K棒, SSE streams | [STREAMING.md](references/STREAMING.md) |

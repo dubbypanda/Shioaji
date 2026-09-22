@@ -254,7 +254,7 @@ Use this table before generating client code. Python receives typed callback obj
 | Market-data SSE | Python callbacks receive `TickSTKv1`, `BidAskSTKv1`, `TickFOPv1`, `BidAskFOPv1`, quote objects, or receiver values | `GET /api/v1/stream/data/*` is SSE. Each event has `event:` and JSON `data:`; heartbeat events are keep-alive only | CLI stream prints events from the SSE channel after subscribe | Parse `event:` first, then decode `data:` for that channel. A heartbeat means the connection is alive, not that market data arrived. |
 | Stock/FOP tick and bidask payloads | Python object fields include Python-native `datetime` and Decimal-like values; `.to_dict(raw=True)` is useful when exact raw fields are needed | SSE JSON uses server field names such as `date`, `time`, `total_volume`, `price_chg`, `pct_chg`; Decimal price/amount fields are strings | Same as HTTP/SSE for non-Python languages | Do not copy Python-only field names or types into HTTP clients. Convert string prices to decimal/float in the client language. |
 | Continuous futures R1/R2 over HTTP | Python can subscribe by the resolved contract object | For `TXFR1`/`TXFR2`, include `target_code` from `GET /api/v1/data/contracts/TXFR1?security_type=FUT`; regular futures codes do not need it | CLI/HTTP stream paths that build HTTP payloads must include `target_code` for R1/R2 | If HTTP subscribe returns 200 but SSE only emits heartbeats for R1/R2, first check missing or stale `target_code`. This special rule is futures R1/R2 only. |
-| Order/deal event stream | Use order callbacks/receivers (`api.set_order_callback`, `api.get_order_event_receiver()`) and `api.subscribe_trade(account)` for production event relay | `POST /api/v1/auth/subscribe_trade` returns `SubscribeTradeOut`; `GET /api/v1/stream/data/order_event` emits `order_event` SSE | `shioaji order events` is an active event stream, not historical records; `shioaji auth subscribe-trade [--account]` / `shioaji auth unsubscribe-trade` manage the per-account trade subscription | In production, subscribe per account before opening `order_event`; otherwise expect heartbeat-only. In simulation, subscribe is not required and unsubscribe can return validation error. |
+| Order/deal event stream | Use order callbacks/receivers (`api.set_order_callback`, `api.get_order_event_receiver()`) and `api.subscribe_trade(account)` for per-account delivery | `POST /api/v1/auth/subscribe_trade` returns `SubscribeTradeOut`; `GET /api/v1/stream/data/order_event` emits `order_event` SSE | `shioaji order events` is an active event stream, not historical records; `shioaji auth subscribe-trade [--account]` / `shioaji auth unsubscribe-trade` manage the per-account trade subscription | Production and simulation both support per-account subscription. Subscribe before opening `order_event`; otherwise expect heartbeat-only. |
 | Stream status | No normal Python equivalent for HTTP connection count | `GET /api/v1/stream/status` returns `ConnectionStatus { active_connections, timestamp, status }` | `shioaji server status --streams` includes it as `stream_status` | Use this to diagnose live SSE connection count or unhealthy stream service; it does not prove a symbol is subscribed. |
 | Receiver availability | Python receivers are obtained directly by `api.get_*_receiver()` | `GET /api/v1/stream/receivers` returns receiver availability text | `shioaji server status --streams` includes it as `stream_receivers` | This is diagnostic. Use `/stream/status` for live connection count and subscribe/SSE endpoints for actual data flow. |
 
@@ -714,7 +714,7 @@ curl -X POST http://localhost:8080/api/v1/stream/subscribe \
   -d '{"security_type":"FUT","exchange":"TAIFEX","code":"TXFR1","target_code":"TXFF6","quote_type":"Tick"}'
 
 # Trade events: subscribe per account before opening order_event stream.
-# REQUIRED for /stream/data/order_event in production — without it the SSE
+# REQUIRED for /stream/data/order_event in production and simulation — without it the SSE
 # stream only emits heartbeats. Mirrors api.subscribe_trade(account) in Python.
 curl -X POST http://localhost:8080/api/v1/auth/subscribe_trade \
   -H "Content-Type: application/json" \
@@ -729,11 +729,9 @@ curl -N http://localhost:8080/api/v1/stream/data/quote_idx
 curl -N http://localhost:8080/api/v1/stream/data/order_event
 ```
 
-Trade subscriptions stay active across the server's daily client refresh — call `subscribe_trade` once per account per server boot. Use `POST /api/v1/auth/unsubscribe_trade` (same body) to stop receiving events for an account.
+Production and simulation both support `subscribe_trade` and `unsubscribe_trade`. Call `subscribe_trade` after login for each account before consuming `order_event`; success starts active reports for that account. Use `POST /api/v1/auth/unsubscribe_trade` (same body) to stop them.
 
-In **simulation**, `subscribe_trade` returns a no-op success and `unsubscribe_trade` returns `400`. Paper order events do not require trade-event subscription. You don't need to call either in simulation.
-
-訂閱委託回報需要在打開 `/stream/data/order_event` SSE 之前**先呼叫**一次 `/auth/subscribe_trade`（每帳號一次）；沒有訂閱的話正式環境只會收到 heartbeat。訂閱會跨過 server 每日 client refresh，所以一個 server 開機後對每個帳號訂閱一次即可。**Simulation 模式下不需要呼叫**：`subscribe_trade` 會直接 no-op 成功，`unsubscribe_trade` 會回 400，paper 委託事件不需要 trade-event subscription。
+正式環境與測試環境都支援 `subscribe_trade` 與 `unsubscribe_trade`。登入後，在打開 `/stream/data/order_event` SSE 前先對每個帳戶呼叫 `/auth/subscribe_trade`；成功後開始接收該帳戶的主動回報，未成功訂閱時只會收到 heartbeat。呼叫 `/auth/unsubscribe_trade` 成功後停止接收該帳戶的回報。
 
 ### SSE Event Format SSE 事件格式
 

@@ -181,8 +181,8 @@ order = sj.StockOrder(
 Pre-market reservation orders do not trigger order/deal callbacks immediately. Reservation orders are released at 08:30 on each trading day, and callbacks are triggered then.
 盤前預約單不會立即觸發委託/成交回報。預約單會在每個交易日 08:30 放單，屆時才會觸發委託回報。
 
-Do not infer callback failure only because a pre-market reservation order produced no callback before 08:30. Confirm the order/trade state with `list_trades()` / `/api/v1/order/trades`, and for HTTP order events make sure `POST /api/v1/auth/subscribe_trade` was called per account in production.
-不要因為 08:30 前沒有 callback 就判定 callback 壞掉。請用 `list_trades()` / `/api/v1/order/trades` 確認委託狀態；HTTP 委託回報在正式環境還要確認每個帳戶都已呼叫 `POST /api/v1/auth/subscribe_trade`。
+Do not infer callback failure only because a pre-market reservation order produced no callback before 08:30. Confirm the order/trade state with `list_trades()` / `/api/v1/order/trades`, and for HTTP order events make sure `POST /api/v1/auth/subscribe_trade` succeeded for each account in production or simulation.
+不要因為 08:30 前沒有 callback 就判定 callback 壞掉。請用 `list_trades()` / `/api/v1/order/trades` 確認委託狀態；正式環境與測試環境的 HTTP 委託回報都要確認每個帳戶已成功呼叫 `POST /api/v1/auth/subscribe_trade`。
 
 ---
 
@@ -648,8 +648,8 @@ curl -N http://localhost:8080/api/v1/stream/data
 - Use `/api/v1/health` to confirm server is running 使用 `/api/v1/health` 確認伺服器運行中
 - For futures continuous-month aliases `TXFR1` / `TXFR2`, first resolve the contract and copy `target_code` into the subscribe body. Regular futures codes do not need this.
   期貨連續月 alias `TXFR1` / `TXFR2` 要先查合約並把 `target_code` 放進訂閱 body；一般期貨代碼不需要。
-- For order events in production, call `POST /api/v1/auth/subscribe_trade` once per account before opening `/api/v1/stream/data/order_event`. In simulation, `subscribe_trade` is a no-op success and is not required.
-  正式環境的委託回報要先對每個帳戶呼叫一次 `POST /api/v1/auth/subscribe_trade`，再打開 `/api/v1/stream/data/order_event`；simulation 模式下這是 no-op success，不需要呼叫。
+- For order events in production or simulation, call `POST /api/v1/auth/subscribe_trade` for each account before opening `/api/v1/stream/data/order_event`. A successful response starts active reports for that account.
+  正式環境與測試環境的委託回報都要先對每個帳戶呼叫 `POST /api/v1/auth/subscribe_trade`，成功後才會開始接收該帳戶的主動回報，再打開 `/api/v1/stream/data/order_event`。
 
 ```bash
 # Continuous futures alias example 連續月範例

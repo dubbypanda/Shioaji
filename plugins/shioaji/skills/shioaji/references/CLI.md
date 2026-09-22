@@ -418,9 +418,9 @@ Returns `person_id` and `expire_time`. Requires the CA certificate to be activat
 
 ### auth subscribe-trade
 
-Subscribe to per-account trade/deal events. Mirrors Python `api.subscribe_trade(account)`. In production, the relay only forwards order/deal events for accounts that have an active trade subscription — without it the order event stream stays empty.
+Subscribe to per-account order/deal events. Mirrors Python `api.subscribe_trade(account)`. Production and simulation both support this command. After it succeeds, active reports for that account begin; without a successful subscription the order event stream stays empty.
 
-訂閱指定帳戶的委託/成交事件。正式環境下未訂閱的帳戶不會收到委託回報。
+訂閱指定帳戶的委託／成交事件。正式環境與測試環境都支援此命令；成功後開始接收該帳戶的主動回報，未成功訂閱的帳戶不會收到回報。
 
 ```bash
 shioaji auth subscribe-trade                              # default stock account
