@@ -537,7 +537,7 @@ print(accounts)
 api.login(
     api_key: str,
     secret_key: str,
-    subscribe_trade: bool = True,      # Auto-subscribe to trade events
+    subscribe_trade: bool = True,      # Subscribe trade events on a fresh login (a reused token keeps its session's subscriptions)
     receive_window: int = 30000,       # Token receive window (ms)
     force_refresh: bool = False,       # True = request a fresh backend token; skip token-pool reuse
 ) -> List[Account]
@@ -579,6 +579,9 @@ SJ_API_KEY=xxx SJ_SEC_KEY=yyy shioaji server start
 After login, the token is cached to `SJ_HOME_PATH` (default `~/.shioaji`). Subsequent logins with the same credentials reuse the cached token if it has not expired, avoiding unnecessary API calls.
 登入後，令牌快取到 `SJ_HOME_PATH`（預設 `~/.shioaji`）。使用相同憑證的後續登入會重用未過期的快取令牌。
 
+A reused token keeps the trade-report subscriptions its session already had; `subscribe_trade` on that login does not add or remove them. If `trade_cache_health(account)` reports `NotSubscribed`, call `api.subscribe_trade(account)` (or log in with `force_refresh=True`).
+重用令牌時，沿用該 session 原本的主動回報訂閱，這次 login 的 `subscribe_trade` 不會增減訂閱。若 `trade_cache_health(account)` 顯示 `NotSubscribed`，請呼叫 `api.subscribe_trade(account)`（或以 `force_refresh=True` 重新登入）。
+
 ---
 
 ## Server Health and Auth Responses 伺服器狀態與認證回應
@@ -604,8 +607,8 @@ Use this section before deciding whether the server is ready, whether login/acco
 
 | Check | Response shape | Agent decision |
 |---|---|---|
-| Python `api.subscribe_trade(account)` / `POST /api/v1/auth/subscribe_trade` | `SubscribeTradeOut { account, subscribe_trade, ts }` | Production and simulation both support this operation. It is required before consuming HTTP `/api/v1/stream/data/order_event`; success starts active reports for that account. If `subscribe_trade=false` or the call errors, do not assume order/deal events are active. |
-| Python `api.unsubscribe_trade(account)` / `POST /api/v1/auth/unsubscribe_trade` | `SubscribeTradeOut { account, subscribe_trade, ts }` | Production and simulation both support this operation. Treat `subscribe_trade=false` as successfully unsubscribed; active reports for that account stop. |
+| Python `api.subscribe_trade(account)` / `POST /api/v1/auth/subscribe_trade` | Python `bool` / HTTP `SubscribeTradeOut { account, subscribe_trade, ts }` | Production and simulation both support this operation. It is required before consuming HTTP `/api/v1/stream/data/order_event`; success starts active reports for that account. If `subscribe_trade=false` or the call errors, do not assume order/deal events are active. |
+| Python `api.unsubscribe_trade(account)` / `POST /api/v1/auth/unsubscribe_trade` | Python `bool` / HTTP `SubscribeTradeOut { account, subscribe_trade, ts }` | Production and simulation both support this operation. Treat `subscribe_trade=false` as successfully unsubscribed; active reports for that account stop. |
 
 ---
 

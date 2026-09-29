@@ -1,22 +1,18 @@
 ---
 name: shioaji
-description: |
-  Use for Shioaji, SJ, SinoPac (永豐金), Taiwan market trading/API tasks, or
-  order/trading requests where Shioaji may apply. Covers Python sync/async
-  bindings, `shioaji` CLI, HTTP API, SSE streaming, dashboard embedding, and
-  JS/TS, Go, C/C++, C#, Rust, Java/Kotlin HTTP clients. Covers TWSE/TPEX/TAIFEX
-  orders, quotes, Contract V2 lazy lookup/update events, market data, realtime
-  KBar 即時K棒, enriched index data 即時加值資料 (calculated index 自算指數,
-  authoritative index components 指數成分查詢, index-components rankings/group
-  projections 成分股排行與產業群組投影, legacy index/industry contribution
-  指數貢獻/產業貢獻), market signals 市場訊號
-  (price-limit/rapid-move/volume-burst alerts 漲跌停/急拉急殺/爆量, simtrade
-  試撮 filter), accounts, watchlists, reserve orders, setup,
-  migration, and troubleshooting. Keywords: shioaji, sj, sinopac,
-  永豐金, 台股, 下單, 交易, 即時行情, shioaji server, and SSE streaming.
-  For first-time users, start with account/API onboarding gates before local
-  installation or code. Not for US/HK markets or generic indicators unless
-  paired with Shioaji data.
+description: >-
+  Shioaji (SJ) is SinoPac/永豐金證券's API for trading Taiwan markets
+  (台股/期權 on TWSE, TPEX, TAIFEX). Use for any Shioaji task, or for
+  Taiwan trading automation where Shioaji may apply: Python sync/async
+  code, the `shioaji` CLI, the local HTTP API server with SSE streaming,
+  or HTTP clients in JS/TS, Go, C/C++, C#, Rust, Java/Kotlin. Covers
+  login, API keys and CA, contracts, placing and managing orders
+  (下單/改單/刪單), order reports, real-time quotes and K-bars (即時行情),
+  historical data, market signals, accounts and positions, watchlists,
+  reserve orders, migration, and troubleshooting errors. Also use when
+  someone wants to start using Shioaji or get SinoPac API access for the
+  first time. US/HK markets are not supported yet. Not for other brokers
+  or generic indicators without Shioaji data.
 ---
 
 # Shioaji Trading API

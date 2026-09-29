@@ -242,29 +242,37 @@ order validity are confirmed by the backend/exchange.
 
 ### Day Trading 現股當沖
 
-```python
-# Day trade buy (first leg) 當沖買進（第一筆）
-order = sj.StockOrder(
-    price=580,
-    quantity=1,
-    action=sj.Action.Buy,
-    price_type=sj.StockPriceType.LMT,
-    order_type=sj.OrderType.ROD,
-    daytrade_short=True,  # Enable day trade 啟用當沖
-    account=api.stock_account,
-)
+`daytrade_short=True` means **sell first, buy back later** (先賣後買). Set it only on the
+opening **sell**; never set it on a buy.
+`daytrade_short=True` 代表**先賣後買**，只在開倉的**賣單**設定，買單不要設。
 
-# Day trade sell (close position) 當沖賣出（平倉）
+```python
+# Sell first (open) 先賣（現股當沖賣出）
 order = sj.StockOrder(
     price=590,
     quantity=1,
     action=sj.Action.Sell,
     price_type=sj.StockPriceType.LMT,
     order_type=sj.OrderType.ROD,
-    daytrade_short=True,
+    daytrade_short=True,  # sell-then-buy day trade 先賣後買
+    account=api.stock_account,
+)
+
+# Buy back the same day (close) 當日買回（一般買單）
+order = sj.StockOrder(
+    price=580,
+    quantity=1,
+    action=sj.Action.Buy,
+    price_type=sj.StockPriceType.LMT,
+    order_type=sj.OrderType.ROD,
     account=api.stock_account,
 )
 ```
+
+Buy-first day trading (先買後賣) uses ordinary cash orders for both legs, without
+`daytrade_short`. Whether selling shares bought today is accepted depends on the
+account's day-trading eligibility, which the broker checks.
+先買後賣兩筆都用一般現股單，不帶 `daytrade_short`；能否賣出今日買進的股數由帳戶當沖資格決定，券商端檢查。
 
 ---
 
